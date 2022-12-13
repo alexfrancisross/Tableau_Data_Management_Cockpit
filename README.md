@@ -33,6 +33,6 @@ The workbook contains 3 dashboards:
 `python main.py`
 
 ![image](https://user-images.githubusercontent.com/11485060/207330545-12eeecb0-9de2-461f-8628-cd658cb162bc.png)
-4. Open the Tableau Workbook `Data Management Content vx.x.twb` in the `/output` directory and replace the data source with the newly generated yper hyper from step 3:
+4. Open the Tableau Workbook `Data Management Content vx.x.twb` in the `/output` directory and replace the data source with the newly generated hyper file from step 3:
 ![image](https://user-images.githubusercontent.com/11485060/207334012-bb0091cf-4bec-4422-9063-4651387838bb.png)
 
