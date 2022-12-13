@@ -1,0 +1,10 @@
+{
+  "SERVER_TYPE": "cloud",
+  "TS_SERVER_URL": "https://prod-uk-a.online.tableau.com",
+  "PAT_NAME": "<YOUR PAT NAME>",
+  "PAT_SECRET": "<YOUR PAT TOKEN>",
+  "SITE_ID": "<YOUR TABLEAU CLOUD SITE NAME>",
+  "HYPER_OUTPUT" : "output/tableau_server.hyper",
+  "EXTRACT_SCHEMA" : "Catalog",
+  "VISUALIZE_MODE" : "Catalog"
+}
