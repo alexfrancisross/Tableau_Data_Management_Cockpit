@@ -1,7 +1,7 @@
 # Tableau Data Management Cockpit Overview
-This Repo Contains The Source Code For The Tableau Data Management Cockpit. Written by @Darren Mcgurran
+This Repo Contains The Source Code For The Tableau Data Management Cockpit (credit to @Darren McGurran)
 
-The Tableau Data Management Cockpit provides enhanced administration views and data sources that are based on the Tableau Catalog Metadata API. The solution uses Python to mine Tableau assets in the Catalog and generates a .hyper file in the /output folder with each of these assets in separate tables:
+The Tableau Data Management Cockpit provides enhanced admin views and data sources that are based on the Tableau Catalog Metadata API. The solution uses Python to mine Tableau and External assets in the Catalog and generates a .hyper file with each of these assets in separate tables:
 ![image](https://user-images.githubusercontent.com/11485060/207291316-4cc6322c-145d-4edb-bda0-99cfd45bb8f0.png)
 
 There is an accompanying workbook called "Data Management - Tableau Cloud Content v1.2.twb" in the output folder that provides a template for how these tables can be related to generate a data source with the upstream and downstream assets:
@@ -16,3 +16,16 @@ The workbook contains 3 dashboards:
 ![image](https://user-images.githubusercontent.com/11485060/207293725-e7cdd067-04f3-406a-ac58-516ca344e6fe.png)
 
 # Instructions
+1. Edit the `settings.json` file located in the /data directory to include your Tableau Server/Cloud and personal access token details. Note that the Server Type should be set to either "on_prem" or "cloud" and the TS_SERVER_URL should reflect the full dns of your Tableau Server / Tableau Cloud Site e.g. "https://prod-uk-a.online.tableau.com"
+![image](https://user-images.githubusercontent.com/11485060/207326853-1327abe2-294c-4567-9f9d-af66d04bbd7c.png)
+2. Ensure you have a working python 3.x installation with the following packages installed:
+`pip install tableauhyperapi`
+`pip install tableauserverclient`
+`pip install iso8601`
+`pip install psycopg2`
+3. Run the following command to run the application and generate the output hyper file (as per the `HYPER_OUTPUT` variable in the `settings.json` file):
+`python main.py`
+![image](https://user-images.githubusercontent.com/11485060/207330545-12eeecb0-9de2-461f-8628-cd658cb162bc.png)
+4. Open the Tableau Workbook `Data Management Content vx.x.twb` in the `/output` directory and replace the data source with the newly generated yper hyper from step 3:
+![image](https://user-images.githubusercontent.com/11485060/207334012-bb0091cf-4bec-4422-9063-4651387838bb.png)
+
