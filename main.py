@@ -114,7 +114,7 @@ if __name__ == '__main__':
     all_sites = None
     if server_type == "on_prem":
         all_sites = get_sites(server)
-        all_sites = all_sites[0:1]
+        all_sites = all_sites[0:50]
 
     try:
         # Starts the Hyper Process with telemetry enabled to send data to Tableau.
@@ -132,7 +132,7 @@ if __name__ == '__main__':
                 if visualize_mode == "all" or visualize_mode == "catalog":
                     if server_type == "on_prem":
                         for site in all_sites:
-                            print("\nSite Name : {0}\n".format(site.name))
+                            print("\nSite Name : {0} - {1}\n".format(site.name, datetime.now().time()))
                             auth_token = server.auth.switch_site(site)
                             dict_catalog_data = get_catalog_data(TSC, server)
                             write_catalog_to_hyper(server, connection, dict_table_definitions, dict_catalog_data)

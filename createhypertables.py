@@ -135,7 +135,35 @@ def create_tables(hyper_connection, schema, mode):
             TableDefinition.Column('Remote Type', SqlType.text()),
             TableDefinition.Column('Nullable', SqlType.bool()),
             TableDefinition.Column('Table ID', SqlType.text()),
+            TableDefinition.Column('Database ID', SqlType.text()),
             TableDefinition.Column('Has Description', SqlType.bool())
+        ]
+    )
+
+    column_assets = TableDefinition(
+        table_name=TableName(schema, 'Column Assets'),
+        columns=[
+            TableDefinition.Column('Column ID', SqlType.text()),
+            TableDefinition.Column('Column Name', SqlType.text()),
+            TableDefinition.Column('Remote Type', SqlType.text()),
+            TableDefinition.Column('Table ID', SqlType.text()),
+            TableDefinition.Column('Table Name', SqlType.text()),
+            TableDefinition.Column('Table Type', SqlType.text()),
+            TableDefinition.Column('Certified Table ID', SqlType.text()),
+            TableDefinition.Column('Certified Table', SqlType.bool()),
+            TableDefinition.Column('Database ID', SqlType.text()),
+            TableDefinition.Column('Database Name', SqlType.text()),
+            TableDefinition.Column('Database Type', SqlType.text()),
+            TableDefinition.Column('Database Connection Type', SqlType.text()),
+            TableDefinition.Column('Certified Database ID', SqlType.text()),
+            TableDefinition.Column('Certified Database', SqlType.bool()),
+            TableDefinition.Column('Site ID', SqlType.text()),
+            TableDefinition.Column('Site Name', SqlType.text()),
+            TableDefinition.Column('Has Assets', SqlType.bool()),
+            TableDefinition.Column('Asset ID', SqlType.text()),
+            TableDefinition.Column('Asset Name', SqlType.text()),
+            TableDefinition.Column('Asset Type', SqlType.text()),
+            TableDefinition.Column('Project Name', SqlType.text())
         ]
     )
 
@@ -173,6 +201,31 @@ def create_tables(hyper_connection, schema, mode):
         ]
     )
 
+    field_assets = TableDefinition(
+        table_name=TableName(schema, "Field Assets"),
+        columns=[
+            TableDefinition.Column('Field ID', SqlType.text()),
+            TableDefinition.Column('Site ID', SqlType.text()),
+            TableDefinition.Column('Site Name', SqlType.text()),
+            TableDefinition.Column('Field Name', SqlType.text()),
+            TableDefinition.Column('Fully Qualified Name', SqlType.text()),
+            TableDefinition.Column('Description', SqlType.text()),
+            TableDefinition.Column('Inherited Description', SqlType.text()),
+            TableDefinition.Column('Field Type', SqlType.text()),
+            TableDefinition.Column('DataSource ID', SqlType.text()),
+            TableDefinition.Column('DataSource Name', SqlType.text()),
+            TableDefinition.Column('DataSource Type', SqlType.text()),
+            TableDefinition.Column('Workbook ID', SqlType.text()),
+            TableDefinition.Column('Workbook Name', SqlType.text()),
+            TableDefinition.Column('Sheet ID', SqlType.text()),
+            TableDefinition.Column('Sheet Name', SqlType.text()),
+            TableDefinition.Column('Dashboard ID', SqlType.text()),
+            TableDefinition.Column('Dashboard Name', SqlType.text()),
+            TableDefinition.Column('Data Type', SqlType.text()),
+            TableDefinition.Column('Column ID', SqlType.text())
+        ]
+    )
+
     virtual_connections = TableDefinition(
         table_name=TableName(schema, "Virtual Connections"),
         columns=[
@@ -197,6 +250,8 @@ def create_tables(hyper_connection, schema, mode):
             TableDefinition.Column('Owner Email', SqlType.text()),
             TableDefinition.Column('Viz Portal ID', SqlType.text()),
             TableDefinition.Column('Viz Portal URL ID', SqlType.text()),
+            TableDefinition.Column('Create Datetime', SqlType.timestamp()),
+            TableDefinition.Column('Update Datetime', SqlType.timestamp()),
             TableDefinition.Column('Has Description', SqlType.bool()),
             TableDefinition.Column('Has Owner', SqlType.bool())
         ]
@@ -471,6 +526,8 @@ def create_tables(hyper_connection, schema, mode):
             TableDefinition.Column('Owner Name', SqlType.text()),
             TableDefinition.Column('Owner Username', SqlType.text()),
             TableDefinition.Column('Owner Email', SqlType.text()),
+            TableDefinition.Column('Create Datetime', SqlType.timestamp()),
+            TableDefinition.Column('Update Datetime', SqlType.timestamp()),
             TableDefinition.Column('Has Description', SqlType.bool()),
             TableDefinition.Column('Has Owner', SqlType.bool())
         ]
@@ -676,7 +733,7 @@ def create_tables(hyper_connection, schema, mode):
         ]
     )
 
-    assets = TableDefinition(
+    owned_assets = TableDefinition(
         table_name=TableName(schema, 'Owned Assets'),
         columns=[
             TableDefinition.Column('Asset ID', SqlType.text()),
@@ -692,6 +749,37 @@ def create_tables(hyper_connection, schema, mode):
             TableDefinition.Column('Project ID', SqlType.text()),
             TableDefinition.Column('Container Type', SqlType.text()),
             TableDefinition.Column('Container Name', SqlType.text()),
+            TableDefinition.Column('Owner ID', SqlType.text()),
+            TableDefinition.Column('Owner Luid', SqlType.text()),
+            TableDefinition.Column('Owner Name', SqlType.text()),
+            TableDefinition.Column('Owner Username', SqlType.text()),
+            TableDefinition.Column('Owner URI', SqlType.text()),
+            TableDefinition.Column('Owner Domain', SqlType.text()),
+            TableDefinition.Column('Owner Email', SqlType.text()),
+            TableDefinition.Column('Description', SqlType.text()),
+            TableDefinition.Column('Certified', SqlType.bool()),
+            TableDefinition.Column('Has Owner', SqlType.bool()),
+            TableDefinition.Column('Has Description', SqlType.bool())
+        ]
+    )
+
+    all_assets = TableDefinition(
+        table_name=TableName(schema, 'All Assets'),
+        columns=[
+            TableDefinition.Column('Asset ID', SqlType.text()),
+            TableDefinition.Column('Site ID', SqlType.text()),
+            TableDefinition.Column('Site Name', SqlType.text()),
+            TableDefinition.Column('Asset Luid', SqlType.text()),
+            TableDefinition.Column('Asset Name', SqlType.text()),
+            TableDefinition.Column('Asset Type', SqlType.text()),
+            TableDefinition.Column('Asset URI', SqlType.text()),
+            TableDefinition.Column('Create Datetime', SqlType.timestamp()),
+            TableDefinition.Column('Update Datetime', SqlType.timestamp()),
+            TableDefinition.Column('Project Name', SqlType.text()),
+            TableDefinition.Column('Project ID', SqlType.text()),
+            TableDefinition.Column('Container Type', SqlType.text()),
+            TableDefinition.Column('Container Name', SqlType.text()),
+            TableDefinition.Column('Ownable', SqlType.bool()),
             TableDefinition.Column('Owner ID', SqlType.text()),
             TableDefinition.Column('Owner Luid', SqlType.text()),
             TableDefinition.Column('Owner Name', SqlType.text()),
@@ -809,33 +897,35 @@ def create_tables(hyper_connection, schema, mode):
     if mode == "catalog":
         table_definitions_dict = {'Sites': sites, 'Workbooks': workbooks, 'Dashboards': dashboards, 'Sheets': sheets,
                                   'Sheet Fields': sheet_fields, 'Dashboard Sheets': dashboard_sheets, 'Fields': fields,
-                                  'Referenced Fields': referenced_fields, 'Virtual Connections': virtual_connections,
-                                  'Datasources': datasources, 'Datasource Workbooks': datasource_workbooks, 'Columns':
-                                  columns, 'Tables': tables, 'Databases': databases, 'Database Assets':
+                                  'Field Assets': field_assets, 'Referenced Fields': referenced_fields,
+                                  'Virtual Connections': virtual_connections, 'Datasources': datasources,
+                                  'Datasource Workbooks': datasource_workbooks, 'Columns': columns, 'Column Assets':
+                                  column_assets, 'Tables': tables, 'Databases': databases, 'Database Assets':
                                   database_assets, 'Views': views, 'Content Owners': content_owners, 'Owner Assets':
                                   owner_assets, 'Metrics': metrics, 'Flows': flows, 'Data Quality Warnings': dqws,
                                   'Data Quality Certifications': dqcs, 'Groups': groups, 'Users': users, 'Group Users':
                                   group_users, 'Projects': projects, 'Parameters': parameters, 'Parameter References':
                                   parameter_references, 'Tags': tags, 'Tag Assets': tag_assets, 'Lenses': lenses,
-                                  'Assets': assets, 'Lens Fields': lens_fields, 'Ask Data Extensions':
-                                  ask_data_extensions, 'Datasource Filters': datasource_filters}
+                                  'Owned Assets': owned_assets, 'All Assets': all_assets, 'Lens Fields': lens_fields,
+                                  'Ask Data Extensions': ask_data_extensions, 'Datasource Filters': datasource_filters}
     elif mode == "repo":
         table_definitions_dict = {'View Stats': view_stats, 'Historic Events': hist_events}
 
     else:
         table_definitions_dict = {'Sites': sites, 'Workbooks': workbooks, 'Dashboards': dashboards, 'Sheets': sheets,
                                   'Sheet Fields': sheet_fields, 'Dashboard Sheets': dashboard_sheets, 'Fields': fields,
-                                  'Referenced Fields': referenced_fields, 'Virtual Connections': virtual_connections,
-                                  'Datasources': datasources, 'Datasource Workbooks': datasource_workbooks, 'Columns':
-                                      columns, 'Tables': tables, 'Databases': databases, 'Database Assets':
-                                      database_assets, 'Views': views, 'Content Owners': content_owners, 'Owner Assets':
-                                      owner_assets, 'Metrics': metrics, 'Flows': flows, 'Data Quality Warnings': dqws,
-                                  'Data Quality Certifications': dqcs, 'Groups': groups, 'Users': users, 'Group Users':
-                                      group_users, 'Projects': projects, 'Parameters': parameters,
-                                  'Parameter References':
-                                      parameter_references, 'Tags': tags, 'Tag Assets': tag_assets, 'Lenses': lenses,
-                                  'Assets': assets, 'Lens Fields': lens_fields, 'Ask Data Extensions':
-                                      ask_data_extensions, 'Datasource Filters': datasource_filters,
+                                  'Field Assets': field_assets, 'Referenced Fields': referenced_fields,
+                                  'Virtual Connections': virtual_connections, 'Datasources': datasources,
+                                  'Datasource Workbooks': datasource_workbooks, 'Columns': columns,
+                                  'Column Assets': column_assets,'Tables': tables, 'Databases': databases,
+                                  'Database Assets': database_assets, 'Views': views, 'Content Owners': content_owners,
+                                  'Owner Assets': owner_assets, 'Metrics': metrics, 'Flows': flows,
+                                  'Data Quality Warnings': dqws, 'Data Quality Certifications': dqcs, 'Groups': groups,
+                                  'Users': users, 'Group Users': group_users, 'Projects': projects,
+                                  'Parameters': parameters, 'Parameter References': parameter_references,
+                                  'Tags': tags, 'Tag Assets': tag_assets, 'Lenses': lenses,
+                                  'Owned Assets': owned_assets, 'All Assets': all_assets, 'Lens Fields': lens_fields,
+                                  'Ask Data Extensions': ask_data_extensions, 'Datasource Filters': datasource_filters,
                                   'View Stats': view_stats, 'Historic Events': hist_events}
 
     for table_name, table_definition in table_definitions_dict.items():

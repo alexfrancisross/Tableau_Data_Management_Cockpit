@@ -30,7 +30,9 @@ def write_catalog_to_hyper(tableau_server, hyper_connection, table_definitions, 
     database_asset_table_def = table_definitions.get('Database Assets')
     table_table_def = table_definitions.get('Tables')
     column_table_def = table_definitions.get('Columns')
+    column_asset_table_def = table_definitions.get('Column Assets')
     field_table_def = table_definitions.get('Fields')
+    field_asset_table_def = table_definitions.get('Field Assets')
     reference_field_table_def = table_definitions.get('Referenced Fields')
     virtual_connection_table_def = table_definitions.get('Virtual Connections')
     datasource_table_def = table_definitions.get('Datasources')
@@ -55,7 +57,7 @@ def write_catalog_to_hyper(tableau_server, hyper_connection, table_definitions, 
     tag_table_def = table_definitions.get('Tags')
     tag_asset_table_def = table_definitions.get('Tag Assets')
     flow_table_def = table_definitions.get('Flows')
-    asset_table_def = table_definitions.get('Assets')
+    owned_asset_table_def = table_definitions.get('Owned Assets')
     lens_table_def = table_definitions.get('Lenses')
     lens_field_table_def = table_definitions.get('Lens Fields')
     ask_data_extension_table_def = table_definitions.get('Ask Data Extensions')
@@ -101,22 +103,26 @@ def write_catalog_to_hyper(tableau_server, hyper_connection, table_definitions, 
 
     # Insert into one or more Column related tables
     if column_data is not None:
-        insert_into_column_tables(hyper_connection, site_id, site_name, column_data, column_table_def)
+        insert_into_column_tables(hyper_connection, site_id, site_name, column_data, column_table_def,
+                                  column_asset_table_def)
 
     # Insert into one or more Field related tables
     if field_data is not None:
         insert_into_field_tables(hyper_connection, site_id, site_name, field_data, field_table_def,
-                                 reference_field_table_def)
+                                 reference_field_table_def, field_asset_table_def)
 
     if virtual_connection_data is not None:
         insert_into_virtual_connection_tables(hyper_connection, site_id, site_name, virtual_connection_data,
                                               virtual_connection_table_def)
+        insert_into_asset_tables(hyper_connection, server_name, site_id, site_name, virtual_connection_data,
+                                 owned_asset_table_def)
 
     # Insert into one or more Datasource related tables
     if datasource_data is not None:
         insert_into_datasource_tables(hyper_connection, site_id, site_name, datasource_data, datasource_table_def,
                                       datasource_workbooks_table_def)
-        insert_into_asset_tables(hyper_connection, server_name, site_id, site_name, datasource_data, asset_table_def)
+        insert_into_asset_tables(hyper_connection, server_name, site_id, site_name, datasource_data,
+                                 owned_asset_table_def)
 
     # Insert into one or more Project related tables
     if project_data is not None:
@@ -125,7 +131,8 @@ def write_catalog_to_hyper(tableau_server, hyper_connection, table_definitions, 
     # Insert into one or more Workbook related tables
     if workbook_data is not None:
         insert_into_workbook_tables(hyper_connection, site_id, site_name, workbook_data, workbook_table_def)
-        insert_into_asset_tables(hyper_connection, server_name, site_id, site_name, workbook_data, asset_table_def)
+        insert_into_asset_tables(hyper_connection, server_name, site_id, site_name, workbook_data,
+                                 owned_asset_table_def)
 
     # Insert into one or more Dashboard and Sheet related tables
     if view_data is not None:
@@ -135,7 +142,7 @@ def write_catalog_to_hyper(tableau_server, hyper_connection, table_definitions, 
     # Insert into one or more Metric related tables
     if metric_data is not None:
         insert_into_metric_tables(hyper_connection, site_id, site_name, metric_data, metric_table_def)
-        insert_into_asset_tables(hyper_connection, server_name, site_id, site_name, metric_data, asset_table_def)
+        insert_into_asset_tables(hyper_connection, server_name, site_id, site_name, metric_data, owned_asset_table_def)
 
     # Insert into one or more User related tables
     if owner_data is not None:
@@ -173,12 +180,12 @@ def write_catalog_to_hyper(tableau_server, hyper_connection, table_definitions, 
     # Insert into one or more Flow related tables
     if flow_data is not None:
         insert_into_flow_tables(hyper_connection, site_id, site_name, flow_data, flow_table_def)
-        insert_into_asset_tables(hyper_connection, server_name, site_id, site_name, flow_data, asset_table_def)
+        insert_into_asset_tables(hyper_connection, server_name, site_id, site_name, flow_data, owned_asset_table_def)
 
     # Insert into one or more Lenses related tables
     if lens_data is not None:
         insert_into_lens_tables(hyper_connection, site_id, site_name, lens_data, lens_table_def)
-        insert_into_asset_tables(hyper_connection, server_name, site_id, site_name, lens_data, asset_table_def)
+        insert_into_asset_tables(hyper_connection, server_name, site_id, site_name, lens_data, owned_asset_table_def)
 
     # Insert into one or more Lens Fields related tables
     if lens_field_data is not None:
@@ -329,6 +336,23 @@ def insert_into_database_tables(hyper_connection, site_id, site_name, database_d
                                     asset_instance.get('projectName'), contact_id, contact_name, contact_username,
                                     contact_email]
                 database_asset_rows.append(asset_row_to_add)
+        if 'downstreamLenses' in row:
+            for asset_instance in row.get('downstreamLenses'):
+                asset_row_to_add = [asset_id, name, type_name, connection_type, certified, site_id, site_name,
+                                    asset_instance.get('id'), asset_instance.get('name'),
+                                    'Lenses', asset_instance.get('isCertified'),
+                                    asset_instance.get('projectName'), contact_id, contact_name, contact_username,
+                                    contact_email]
+                database_asset_rows.append(asset_row_to_add)
+        if 'downstreamVirtualConnections' in row:
+            for asset_instance in row.get('downstreamVirtualConnections'):
+                asset_row_to_add = [asset_id, name, type_name, connection_type, certified, site_id, site_name,
+                                    asset_instance.get('id'), asset_instance.get('name'),
+                                    'VirtualConnections', asset_instance.get('isCertified'),
+                                    asset_instance.get('projectName'), contact_id, contact_name, contact_username,
+                                    contact_email]
+                database_asset_rows.append(asset_row_to_add)
+
 
         row_to_add = [asset_id, site_id, site_name, luid, viz_portal_id, name, description, type_name, connection_type,
                       certified, grouped, controlled_permissions_enabled, has_active_warning, contact_id, contact_name,
@@ -389,14 +413,11 @@ def insert_into_table_tables(hyper_connection, site_id, site_name, table_data, t
             is_certified = row.get('isCertified')
         else:
             is_certified = None
+        database_id = None
         if 'database' in row:
             # database could be null if we could not parse the custom SQL
             if row['database']:
                 database_id = row['database'].get('id')
-            else:
-                database_id = None
-        else:
-            database_id = None
         if 'hasActiveWarning' in row:
             active_warning = row.get('hasActiveWarning')
         else:
@@ -441,10 +462,13 @@ def insert_into_table_tables(hyper_connection, site_id, site_name, table_data, t
     update_hyper(hyper_connection, table_rows, table_definition)
 
 
-def insert_into_column_tables(hyper_connection, site_id, site_name, column_data, column_table_definition):
+def insert_into_column_tables(hyper_connection, site_id, site_name, column_data, column_table_definition,
+                              column_asset_table_definition):
     # Insert the results into Hyper
 
     column_rows = []
+    column_asset_rows = []
+
     for row in column_data:
         asset_id = row.get('id')
         viz_portal_id = row.get('vizportalId')
@@ -457,23 +481,127 @@ def insert_into_column_tables(hyper_connection, site_id, site_name, column_data,
         description_inherited = None
         remote_type = row.get('remoteType')
         nullable = row.get('isNullable')
+        table_id = None
+        table_name = None
+        table_type = None
+        certified_table_id = None
+        certified_table = None
+        database_id = None
+        database_name = None
+        database_type = None
+        database_connection_type = None
+        certified_database_id = None
+        certified_database = None
         if row['table']:
             table_id = row['table'].get('id')
-        else:
-            table_id = None
-
-        row_to_add = [asset_id, site_id, site_name, viz_portal_id, luid, name, description, description_inherited, remote_type,
-                      nullable, table_id, has_description]
+            table_name = row['table'].get('name')
+            table_type = row['table'].get('__typename')
+            certified_table = row['table'].get('isCertified')
+            if certified_table:
+                certified_table_id = table_id
+            if 'database' in row['table']:
+                if row['table']['database']:
+                    database_id = row['table']['database'].get('id')
+                    database_name = row['table']['database'].get('name')
+                    database_connection_type = row['table']['database'].get('connectionType')
+                    database_type = row['table']['database'].get('__typename')
+                    certified_database = row['table']['database'].get('isCertified')
+                    if certified_database:
+                        certified_database_id = database_id
+        row_to_add = [asset_id, site_id, site_name, viz_portal_id, luid, name, description, description_inherited,
+                      remote_type, nullable, table_id, database_id, has_description]
         column_rows.append(row_to_add)
 
+        has_assets = False
+        if 'downstreamWorkbooks' in row:
+            for asset_instance in row.get('downstreamWorkbooks'):
+                has_assets = True
+                asset_row_to_add = [asset_id, name, remote_type, table_id, table_name, table_type, certified_table_id,
+                                    certified_table, database_id, database_name, database_type,
+                                    database_connection_type, certified_database_id,
+                                    certified_database, site_id, site_name, has_assets, asset_instance.get('id'),
+                                    asset_instance.get('name'), 'Workbooks', asset_instance.get('projectName')]
+                column_asset_rows.append(asset_row_to_add)
+        if 'downstreamDashboards' in row:
+            for asset_instance in row.get('downstreamDashboards'):
+                has_assets = True
+                asset_row_to_add = [asset_id, name, remote_type, table_id, table_name, table_type, certified_table_id,
+                                    certified_table, database_id, database_name, database_type,
+                                    database_connection_type, certified_database_id,
+                                    certified_database, site_id, site_name, has_assets, asset_instance.get('id'),
+                                    asset_instance.get('name'), 'Dashboards', ""]
+                column_asset_rows.append(asset_row_to_add)
+        if 'downstreamSheets' in row:
+            for asset_instance in row.get('downstreamSheets'):
+                has_assets = True
+                asset_row_to_add = [asset_id, name, remote_type, table_id, table_name, table_type, certified_table_id,
+                                    certified_table, database_id, database_name, database_type,
+                                    database_connection_type, certified_database_id,
+                                    certified_database, site_id, site_name, has_assets, asset_instance.get('id'),
+                                    asset_instance.get('name'), 'Sheets', ""]
+                column_asset_rows.append(asset_row_to_add)
+        if 'downstreamFlows' in row:
+            for asset_instance in row.get('downstreamFlows'):
+                has_assets = True
+                asset_row_to_add = [asset_id, name, remote_type, table_id, table_name, table_type, certified_table_id,
+                                    certified_table, database_id, database_name, database_type,
+                                    database_connection_type, certified_database_id,
+                                    certified_database, site_id, site_name, has_assets, asset_instance.get('id'),
+                                    asset_instance.get('name'), 'Flows', asset_instance.get('projectName')]
+                column_asset_rows.append(asset_row_to_add)
+        if 'downstreamDatasources' in row:
+            for asset_instance in row.get('downstreamDatasources'):
+                has_assets = True
+                asset_row_to_add = [asset_id, name, remote_type, table_id, table_name, table_type, certified_table_id,
+                                    certified_table, database_id, database_name, database_type,
+                                    database_connection_type, certified_database_id,
+                                    certified_database, site_id, site_name, has_assets, asset_instance.get('id'),
+                                    asset_instance.get('name'), 'Data Sources', asset_instance.get('projectName')]
+                column_asset_rows.append(asset_row_to_add)
+        if 'downstreamMetrics' in row:
+            for asset_instance in row.get('downstreamMetrics'):
+                has_assets = True
+                asset_row_to_add = [asset_id, name, remote_type, table_id, table_name, table_type, certified_table_id,
+                                    certified_table, database_id, database_name, database_type,
+                                    database_connection_type, certified_database_id,
+                                    certified_database, site_id, site_name, has_assets, asset_instance.get('id'),
+                                    asset_instance.get('name'), 'Metrics', asset_instance.get('projectName')]
+                column_asset_rows.append(asset_row_to_add)
+        if 'downstreamLenses' in row:
+            for asset_instance in row.get('downstreamLenses'):
+                has_assets = True
+                asset_row_to_add = [asset_id, name, remote_type, table_id, table_name, table_type, certified_table_id,
+                                    certified_table, database_id, database_name, database_type,
+                                    database_connection_type, certified_database_id,
+                                    certified_database, site_id, site_name, has_assets, asset_instance.get('id'),
+                                    asset_instance.get('name'), 'Lenses', asset_instance.get('projectName')]
+                column_asset_rows.append(asset_row_to_add)
+        if 'downstreamVirtualConnections' in row:
+            for asset_instance in row.get('downstreamVirtualConnections'):
+                has_assets = True
+                asset_row_to_add = [asset_id, name, remote_type, table_id, table_name, table_type, certified_table_id,
+                                    certified_table, database_id, database_name, database_type,
+                                    database_connection_type, certified_database_id,
+                                    certified_database, site_id, site_name, has_assets, asset_instance.get('id'),
+                                    asset_instance.get('name'), 'VirtualConnections', asset_instance.get('projectName')]
+                column_asset_rows.append(asset_row_to_add)
+        if not has_assets:
+            asset_row_to_add = [asset_id, name, remote_type, table_id, table_name, table_type, certified_table_id,
+                                certified_table, database_id, database_name, database_type, database_connection_type,
+                                certified_database_id, certified_database, site_id, site_name, has_assets, None, None,
+                                None, None ]
+            column_asset_rows.append(asset_row_to_add)
+
     update_hyper(hyper_connection, column_rows, column_table_definition)
+    update_hyper(hyper_connection, column_asset_rows, column_asset_table_definition)
 
 
 def insert_into_field_tables(hyper_connection, site_id, site_name, field_data, field_table_definition,
-                             referenced_field_table_definition):
+                             referenced_field_table_definition, field_asset_table_definition):
     # Create the data holders
     field_rows = []
     referenced_field_rows = []
+    field_asset_rows = []
 
     for row in field_data:
         asset_id = row.get('id')
@@ -489,10 +617,6 @@ def insert_into_field_tables(hyper_connection, site_id, site_name, field_data, f
         hidden = row.get('isHidden')
         folder_name = row.get('folderName')
         type_name = row.get('__typename')
-        if not row['datasource']:
-            datasource_id = None
-        else:
-            datasource_id = row['datasource'].get('id')
         if 'binSize' in row:
             bin_size = row.get('binSize')
         else:
@@ -562,6 +686,57 @@ def insert_into_field_tables(hyper_connection, site_id, site_name, field_data, f
             for referenced_field in row['fields']:
                 referenced_field_row_to_add = [asset_id, referenced_field.get('id')]
                 referenced_field_rows.append(referenced_field_row_to_add)
+        # Get related datasource, sheet, dashboard, workbook info
+        datasource_id = None
+        datasource_name = None
+        datasource_type = None
+        sheet_id = None
+        sheet_name = None
+        dashboard_id = None
+        dashboard_name = None
+        workbook_id = None
+        workbook_name = None
+        if row['datasource']:
+            datasource_id = row['datasource'].get('id')
+            datasource_name = row['datasource'].get('name')
+            datasource_type = row['datasource'].get('__typename')
+        if 'sheets' in row:
+            for sheet_instance in row.get('sheets'):
+                sheet_id = sheet_instance.get('id')
+                sheet_name = sheet_instance.get('name')
+                if 'workbook' in sheet_instance:
+                    if sheet_instance.get('workbook'):
+                        workbook_instance = sheet_instance.get('workbook')
+                        workbook_id = workbook_instance.get('id')
+                        workbook_name = workbook_instance.get('name')
+                if 'containedInDashboards' in sheet_instance:
+                    if sheet_instance.get('containedInDashboards'):
+                        for dashboard_instance in sheet_instance.get('containedInDashboards'):
+                            dashboard_id = dashboard_instance.get('id')
+                            dashboard_name = dashboard_instance.get('name')
+
+                            asset_row_to_add = [asset_id, site_id, site_name, name, fully_qualified_name, description,
+                                        description_inherited, type_name, datasource_id, datasource_name, datasource_type,
+                                        workbook_id,  workbook_name, sheet_id, sheet_name, dashboard_id, dashboard_name, data_type,
+                                        column_id]
+
+                            field_asset_rows.append(asset_row_to_add)
+                    else:
+                        asset_row_to_add = [asset_id, site_id, site_name, name, fully_qualified_name, description,
+                                            description_inherited, type_name, datasource_id, datasource_name,
+                                            datasource_type,
+                                            workbook_id, workbook_name, sheet_id, sheet_name, dashboard_id, dashboard_name,
+                                            data_type,                                       column_id]
+
+                    field_asset_rows.append(asset_row_to_add)
+
+        asset_row_to_add = [asset_id, site_id, site_name, name, fully_qualified_name, description,
+                            description_inherited, type_name, datasource_id, datasource_name, datasource_type,
+                            workbook_id, workbook_name, sheet_id, sheet_name, dashboard_id, dashboard_name,
+                            data_type,
+                            column_id]
+
+        field_asset_rows.append(asset_row_to_add)
 
         row_to_add = [asset_id, site_id, site_name, name, fully_qualified_name, description, description_inherited,
                       hidden, folder_name, type_name, datasource_id, bin_size, data_type, data_category, role, formula,
@@ -571,8 +746,11 @@ def insert_into_field_tables(hyper_connection, site_id, site_name, field_data, f
 
         field_rows.append(row_to_add)
 
+
+
     update_hyper(hyper_connection, field_rows, field_table_definition)
     update_hyper(hyper_connection, referenced_field_rows, referenced_field_table_definition)
+    update_hyper(hyper_connection, field_asset_rows, field_asset_table_definition)
 
 
 def insert_into_virtual_connection_tables(hyper_connection, site_id, site_name, virtual_connection_data,
@@ -645,11 +823,17 @@ def insert_into_virtual_connection_tables(hyper_connection, site_id, site_name, 
             vizportal_url_id = row.get('vizportalUrlId')
         else:
             vizportal_url_id = None
+        created_at = None
+        if row['createdAt']:
+            created_at = iso8601.parse_date(row.get('createdAt'))
+        updated_at = None
+        if row['updatedAt']:
+            updated_at = iso8601.parse_date(row.get('updatedAt'))
 
         row_to_add = [asset_id, site_id, site_name, name, type_name, luid, uri, is_certified, has_active_warning,
                       description, project_name, project_vizportal_url_id, container_type, container_name,
                       connection_type, owner_id, owner_name, owner_username, owner_email, vizportal_id,
-                      vizportal_url_id, has_description, has_owner]
+                      vizportal_url_id, created_at, updated_at, has_description, has_owner]
         virtual_connection_rows.append(row_to_add)
 
     update_hyper(hyper_connection, virtual_connection_rows, virtual_connection_table_definition)
@@ -1300,6 +1484,12 @@ def insert_into_flow_tables(hyper_connection, site_id, site_name, flow_data, flo
         container_name = row.get('containerName')
         container_type = row.get('containerType')
         contains_unsupported_custom_sql = row.get('containsUnsupportedCustomSql')
+        create_datetime = None
+        if row.get('createdAt'):
+            create_datetime = iso8601.parse_date(row.get('createdAt'))
+        update_datetime = None
+        if row.get('updatedAt'):
+            update_datetime = iso8601.parse_date(row.get('updatedAt'))
         has_owner = False
         if row['owner']:
             has_owner = True
@@ -1316,7 +1506,7 @@ def insert_into_flow_tables(hyper_connection, site_id, site_name, flow_data, flo
         row_to_add = [asset_id, site_id, site_name, luid, name, description, uri, viz_portal_url_id, has_active_warning,
                       project_name, portal_viz_portal_url_id, personal_space_utl_link, container_name, container_type,
                       contains_unsupported_custom_sql, owner_id, owner_name, owner_username, owner_email,
-                      has_description, has_owner]
+                      create_datetime, update_datetime, has_description, has_owner]
 
         flow_rows.append(row_to_add)
 
@@ -1443,6 +1633,8 @@ def insert_into_datasource_filter_tables(hyper_connection, site_id, site_name, t
             field_id = row['field'].get('id')
             field_name = row['field'].get('name')
             field_type = row['field'].get('__typename')
+            if field_type == 'CalculatedField':
+                has_user_reference = False
             if row['field'].get('hasUserReference'):
                 has_user_reference = row['field'].get('hasUserReference')
             if row['field'].get('formula'):
@@ -1566,10 +1758,10 @@ def insert_into_asset_tables(hyper_connection, tableau_server_url, site_id, site
                              asset_table_definition):
     # Insert the results into Hyper
     asset_rows = []
+    valid_assets = ["Workbook", "PublishedDatasource", "Flow", "Metric", "Lens", "VirtualConnection"]
     for row in asset_data:
         asset_type = row.get('__typename')
-        if asset_type == "Workbook" or asset_type == "PublishedDatasource" or asset_type == "Flow" or \
-                asset_type == "Metric" or asset_type == "Lens":
+        if asset_type in valid_assets:
             asset_id = row.get('id')
             luid = row.get('luid')
             name = row.get('name')

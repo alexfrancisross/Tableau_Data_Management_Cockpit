@@ -39,6 +39,11 @@ def connect_to_repository(settings):
 def get_and_write_repo_data_to_hyper(hyper_connection, table_definitions, settings):
     # query settings
     pagination = int(settings['REPOSITORY_PAGINATION'])
+    # Check to see if there is a limit on the number of rows returned per query. Usually here for testing.
+    row_limit_str = settings["REPO_TABLE_ROW_LIMIT"]
+    if row_limit_str != "":
+        row_limit_str = " limit " + row_limit_str
+
     current_row = 0
     # Log into Tableau Repository
     repo_connection = connect_to_repository(settings)
@@ -48,7 +53,7 @@ def get_and_write_repo_data_to_hyper(hyper_connection, table_definitions, settin
     for query_data in all_query_data.items():
         query_name = query_data[0]
         query_table_def = query_data[1].get('table')
-        query = query_data[1].get('query')
+        query = query_data[1].get('query') + row_limit_str
 
         # Create a cursor to perform database operations
         data_cursor = repo_connection.cursor(name='large_results')
@@ -69,7 +74,7 @@ def get_and_write_repo_data_to_hyper(hyper_connection, table_definitions, settin
             if query_name == "View Stats":
                 insert_into_view_stats_tables(hyper_connection, records, query_table_def)
                 current_row += len(records)
-                print("Total rows {1} inserted in {0} table".format(query_name, current_row))
+                print("Total rows {1} inserted in {0} table - {2}".format(query_name, current_row, datetime.now().time()))
             elif query_name == "Historic Events":
                 insert_into_hist_events_tables(hyper_connection, records, query_table_def)
                 current_row += len(records)
